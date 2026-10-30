@@ -164,3 +164,24 @@ typedef struct TigreJuliaGeometry {
 - **Tigre.jl / Wrapper**: BSD 3-Clause License (Copyright 2024-2026, Koh Hashimoto and Tigre.jl contributors)
 - **NVIDIA CUDA Runtime**: NVIDIA Software License Agreement に基づき、再配布可能ライブラリ（`libcudart`）の再配布条件を順守。
 - 生成される JLL パッケージには、各ライセンス原文および著作権表示を含む `LICENSE` / `NOTICE` を同梱する。
+
+---
+
+## 7. BinaryBuilder レシピ実行実績 (Phase 2 検証結果)
+
+- **実行コマンド**: `julia --startup-file=no --project=. build_tarballs.jl --verbose`
+- **対象プラットフォーム**: `Platform("x86_64", "linux"; libc="glibc", cuda="12.4")`
+- **生成物**: `products/Tigre.v2.7.0.x86_64-linux-gnu-cuda+12.4.tar.gz`
+  - **Tree Hash**: `07a661d5e4cbd7b53f5b4716b212eaba26ff17f3`
+  - **SHA256**: `c90553f2921deaa61c6e44c0e82c051a3aacc0ad177362739c433c854a9a218e`
+  - **展開サイズ**: `lib/libtigre_julia.so` (~4.5 MB), `share/licenses/Tigre/LICENSE.txt` (~1.6 KB)
+- **バイナリ構造検査 (`readelf -d`)**:
+  - `SONAME`: `libtigre_julia.so`
+  - `RUNPATH`: `$ORIGIN/../cuda/lib`
+  - `NEEDED`: `libcudart.so.12`, `libstdc++.so.6`, `libc.so.6`, `libm.so.6`, `libgcc_s.so.1`, `ld-linux-x86-64.so.2`
+- **動作検証**:
+  - 展開した `libtigre_julia.so` に対し、`test/symbols.jl`（12 C ABI シンボル検証）および `test/smoke.jl`（dlopen、エラー文字列クエリ、RTX 3090 デバイス検出）を実行し、全 20 項目 Pass。
+- **課題と解決内容**:
+  1. **ソース形式**: GitHub の自動アーカイブは BinaryBuilderBase で拒否されるため、不変な `GitSource` を採用。
+  2. **動的リンク**: nvcc はデフォルトで静的 cudart (`-lcudart_static`) を探すため、`--cudart shared` を指定して `libcudart.so.12` をリンクするように設定。
+

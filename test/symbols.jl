@@ -24,15 +24,20 @@ function find_test_library()
     if haskey(ENV, "LIBTIGRE_PATH") && isfile(ENV["LIBTIGRE_PATH"])
         return ENV["LIBTIGRE_PATH"]
     end
-    # 2. Local Tigre.jl compiled library (if present)
-    candidate = "/home/jov/git/prj/Tigre.jl/deps/usr/lib/libtigre_julia.$(Libdl.dlext)"
-    if isfile(candidate)
-        return candidate
+    # 2. Extracted built products from BinaryBuilder
+    extracted = normpath(joinpath(@__DIR__, "..", "products", "extracted", "lib", "libtigre_julia.$(Libdl.dlext)"))
+    if isfile(extracted)
+        return extracted
     end
     # 3. Local built products
     local_prod = normpath(joinpath(@__DIR__, "..", "products", "libtigre_julia.$(Libdl.dlext)"))
     if isfile(local_prod)
         return local_prod
+    end
+    # 4. Local Tigre.jl compiled library (if present)
+    candidate = "/home/jov/git/prj/Tigre.jl/deps/usr/lib/libtigre_julia.$(Libdl.dlext)"
+    if isfile(candidate)
+        return candidate
     end
     return nothing
 end

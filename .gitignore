@@ -14,6 +14,7 @@ __pycache__/
 *.sha256
 /Tigre_jll/
 /.BinaryBuilder/
+/test/jll_test_env/
 *.log
 
 # Local development files

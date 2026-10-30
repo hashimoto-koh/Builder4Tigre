@@ -185,3 +185,25 @@ typedef struct TigreJuliaGeometry {
   1. **ソース形式**: GitHub の自動アーカイブは BinaryBuilderBase で拒否されるため、不変な `GitSource` を採用。
   2. **動的リンク**: nvcc はデフォルトで静的 cudart (`-lcudart_static`) を探すため、`--cudart shared` を指定して `libcudart.so.12` をリンクするように設定。
 
+---
+
+## 8. JLL パッケージ生成および単体検証実績 (Phase 3 検証結果)
+
+- **生成コマンド**: `julia --startup-file=no --project=. build_tarballs.jl --skip-build --deploy="local"`
+- **生成 JLL パッケージ**: `~/.julia/dev/Tigre_jll` (バージョン: `v2.7.0+0`)
+  - `Artifacts.toml` にて tree-sha1 `07a661d5e4...` およびローカル tarball URL をバインド。
+- **単体検証環境 (`test/jll_test_env`)**:
+  - クリーンな別環境を作成し、`Tigre_jll` を `develop` 登録して検証スクリプト `test/test_jll.jl` を実行。
+  - **ロード検証**: `Tigre_jll.is_available() == true`
+  - **アーティファクトパス**: `~/.julia/artifacts/07a661d5e4cbd7b53f5b4716b212eaba26ff17f3/lib/libtigre_julia.so`
+  - **シンボル検証**: 12 個の C ABI シンボルすべて正常に `dlsym` 解決。
+  - **スモークテスト**: `tigre_julia_error_string(0)` => `"success"`, `tigre_julia_get_gpu_count()` => `1`, `tigre_julia_get_gpu_name(0)` => `"NVIDIA GeForce RTX 3090"`。全 20 テスト合格。
+- **ABI / バージョン互換性検査 (`readelf --version-info`)**:
+  - GLIBC 最大要求バージョン: `GLIBC_2.14` (非常に広範な Linux ディストリビューションで動作可能)
+  - C++ ランタイム要件: `GLIBCXX_3.4.21`, `CXXABI_1.3.9`
+  - 動的ライブラリ依存: `libcudart.so.12` のみ（CUDA Runtime は `CUDA_Runtime_jll` 経由で提供）
+- **動作保証条件**:
+  - ホストに `nvcc` や CUDA Toolkit は不要。
+  - NVIDIA Driver（CUDA 12 対応）がインストールされている環境で GPU カーネルが即座に実行可能。
+
+

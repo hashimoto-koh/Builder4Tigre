@@ -1,0 +1,46 @@
+diff --git a/Project.toml b/Project.toml
+index 1234567..89abcde 100644
+--- a/Project.toml
++++ b/Project.toml
+@@ -20,6 +20,7 @@
+ LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
+ Printf = "de0858da-630c-5321-a00e-9730e06305a7"
+ TOML = "fa267f1f-6049-4f14-aa54-33bafae1ed76"
++Tigre_jll = "c54681b8-104d-569a-9a70-a18a513ac4e1"
+ 
+ [compat]
+ julia = "1.10"
++Tigre_jll = "2.7"
+diff --git a/src/bindings.jl b/src/bindings.jl
+index 2345678..9abcdef 100644
+--- a/src/bindings.jl
++++ b/src/bindings.jl
+@@ -1,4 +1,5 @@
+ using TOML
++import Tigre_jll
+ 
+ const ROOT_DIR = normpath(joinpath(@__DIR__, ".."))
+ const DEPS_DIR = joinpath(ROOT_DIR, "deps")
+@@ -73,6 +74,17 @@ const _NATIVE_HANDLE = Ref{Ptr{Cvoid}}(C_NULL)
+ Return the expected filesystem path to the compiled native shared library (`libtigre_julia`).
+ """
+-native_library_path() = joinpath(ROOT_DIR, "deps", "usr", "lib", "libtigre_julia.$(Libdl.dlext)")
++function native_library_path()
++    override = _env_string(["TIGRE_NATIVE_PATH", "LIBTIGRE_PATH"], "")
++    !isempty(override) && return normpath(override)
++    if isdefined(@__MODULE__, :Tigre_jll) && isdefined(Tigre_jll, :is_available) && Tigre_jll.is_available()
++        return Tigre_jll.libtigre_julia_path
++    end
++    return joinpath(ROOT_DIR, "deps", "usr", "lib", "libtigre_julia.$(Libdl.dlext)")
++end
++
++native_library_backend() = (isdefined(@__MODULE__, :Tigre_jll) && isdefined(Tigre_jll, :is_available) && Tigre_jll.is_available()) ? :jll : :source
+ 
+ """
+     native_library_available() -> Bool
+@@ -204,6 +216,7 @@ Return a summary NamedTuple reporting current status of the native library:
+ library_status() = (;
++    backend = native_library_backend(),
+     path = native_library_path(),
+     available = native_library_available(),
+     build_info_path = native_build_info_path(),

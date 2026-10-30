@@ -5,7 +5,11 @@ using BinaryBuilder, Pkg
 using Base.BinaryPlatforms: arch, os, tags
 
 # Support platforms and helpers from Yggdrasil
-include("platforms/cuda.jl")
+if isfile(joinpath(@__DIR__, "../../platforms/cuda.jl"))
+    include("../../platforms/cuda.jl")
+else
+    include(joinpath(@__DIR__, "platforms/cuda.jl"))
+end
 
 name = "Tigre"
 version = v"2.7.0"

@@ -1,53 +1,53 @@
-# Tigre.jl 統合検証およびパッチ仕様書 (docs/tigre-jl-integration.md)
+# Tigre.jl Integration Verification and Patch Specification (`docs/tigre-jl-integration.md`)
 
-本仕様書は、BinaryBuilder で構築した `Tigre_jll` を `Tigre.jl` に組み込み、ローカルビルドなしで即座に GPU 再構成を実行可能にするための統合設計および検証結果をまとめたものである。
-
----
-
-## 1. 統合の基本方針
-
-1. **破壊的変更の禁止**:
-   - `Tigre.jl` の公開 API（`Ax`, `Atb`, 各種再構成関数、幾何定義、戻り値型・配列形状）は 100% 維持する。
-   - 既存のローカルビルド経路（`deps/build.jl`）は削除せず、開発者向けフォールバックとして温存する。
-
-2. **優先度チェーン**:
-   `native_library_path()` の解決順序:
-   1. 環境変数 `LIBTIGRE_PATH` / `TIGRE_NATIVE_PATH` による明示的オーバーライド
-   2. `Tigre_jll.is_available()` が `true` の場合、JLL アーティファクトパス (`Tigre_jll.libtigre_julia_path`)
-   3. ローカルビルド成果物 `deps/usr/lib/libtigre_julia.so`
-
-3. **診断機能の更新**:
-   - `library_status()` に `backend = :jll | :source` を追加。
-   - `doctor.jl` は JLL 利用時に「JLL backend active (no local nvcc needed)」と明示。
+This specification documents the integration design, patch details, and hardware verification results for integrating `Tigre_jll` (built with BinaryBuilder) into `Tigre.jl`, enabling instant GPU reconstruction without requiring local compilation.
 
 ---
 
-## 2. 実機 GPU (RTX 3090, `sm_86`) による数値回帰テスト結果
+## 1. Core Integration Principles
 
-`test/integration_test.jl` において、`Tigre.jl` の全アルゴリズムに対し、JLL からロードされた `libtigre_julia.so` を用いて厳密な数値回帰テストを実施した。
+1. **Zero Breaking Changes**:
+   - The public API of `Tigre.jl` (`Ax`, `Atb`, reconstruction algorithms, geometry definitions, return types, and array dimensions) remains 100% identical.
+   - The existing local build path (`deps/build.jl`) is preserved as a fallback for developers.
 
-| テスト項目 | アルゴリズム種別 | 結果 | 許容誤差 | 判定 |
+2. **Resolution Priority Chain**:
+   Resolution order for `native_library_path()`:
+   1. Explicit environment variable overrides (`LIBTIGRE_PATH` / `TIGRE_NATIVE_PATH`)
+   2. JLL artifact path (`Tigre_jll.libtigre_julia_path`) when `Tigre_jll.is_available()` is `true`
+   3. Local build artifact `deps/usr/lib/libtigre_julia.so`
+
+3. **Diagnostics Update**:
+   - `library_status()` reports `backend = :jll | :source`.
+   - `doctor.jl` clearly indicates when the JLL backend is active (`"JLL backend active (no local nvcc needed)"`).
+
+---
+
+## 2. Numerical Regression Results on Hardware GPU (RTX 3090, `sm_86`)
+
+Using `test/integration_test.jl`, rigorous numerical regression testing was performed for all 12 algorithms in `Tigre.jl` using `libtigre_julia.so` loaded via JLL against known golden regression fixtures.
+
+| Test Item | Algorithm Type | Result | Tolerance | Status |
 |---|---|---|---|---|
-| 1. `Ax` | Cone-beam 順投影 (Siddon) | 一致 (sum, norm, min, max, samples) | `atol=1e-5`, `rtol=1e-5` | ✅ PASS |
-| 2. `Atb` | Cone-beam 逆投影 (Matched) | 一致 (sum, norm, min, max, samples) | `atol=1e-5`, `rtol=1e-5` | ✅ PASS |
-| 3. `FDK` | FDK 再構成 (Hann フィルタ, Wang パディング) | 一致 (sum, norm, min, max, samples) | `atol=1e-5`, `rtol=1e-5` | ✅ PASS |
-| 4. `SART` | SART 反復再構成 (1 iter) | 一致 (sum, norm, min, max, samples) | `atol=1e-5`, `rtol=1e-5` | ✅ PASS |
-| 5. `FISTA` | FISTA 再構成 (TV 正則化付き) | 一致 (sum, norm, min, max, samples) | `atol=1e-5`, `rtol=1e-5` | ✅ PASS |
-| 6. `LSMR` | LSMR 反復解法 (1 iter) | 一致 (sum, norm, min, max, samples) | `atol=1e-5`, `rtol=1e-5` | ✅ PASS |
-| 7. `Hybrid FLSQR TV` | ハイブリッド FLSQR + TV | 一致 (sum, norm, min, max, samples) | `atol=1e-5`, `rtol=1e-5` | ✅ PASS |
-| 8. `PICCS` | 事前画像拘束圧縮センシング | 一致 (sum, norm, min, max, samples) | `atol=1e-5`, `rtol=1e-5` | ✅ PASS |
-| 9. `Parallel FBP` | Parallel-beam FBP (Hann フィルタ) | 一致 (sum, norm, min, max, samples) | `atol=1e-5`, `rtol=1e-5` | ✅ PASS |
-| 10. `MLEM` | 統計的 MLEM 再構成 | 一致 (sum, norm, min, max, samples) | `atol=1e-5`, `rtol=1e-5` | ✅ PASS |
-| 11. `PCSD` | POCS TV 再構成 | 一致 (sum, norm, min, max, samples) | `atol=2e-4`, `rtol=1e-5` | ✅ PASS |
-| 12. `AwPCSD` | 適応重み付き POCS TV | 一致 (sum, norm, min, max, samples) | `atol=2e-4`, `rtol=1e-5` | ✅ PASS |
+| 1. `Ax` | Cone-beam forward projection (Siddon) | Exact match (sum, norm, min, max, samples) | `atol=1e-5`, `rtol=1e-5` | ✅ PASS |
+| 2. `Atb` | Cone-beam backprojection (Matched) | Exact match (sum, norm, min, max, samples) | `atol=1e-5`, `rtol=1e-5` | ✅ PASS |
+| 3. `FDK` | FDK reconstruction (Hann filter, Wang padding) | Exact match (sum, norm, min, max, samples) | `atol=1e-5`, `rtol=1e-5` | ✅ PASS |
+| 4. `SART` | SART iterative reconstruction (1 iter) | Exact match (sum, norm, min, max, samples) | `atol=1e-5`, `rtol=1e-5` | ✅ PASS |
+| 5. `FISTA` | FISTA reconstruction (with TV regularization) | Exact match (sum, norm, min, max, samples) | `atol=1e-5`, `rtol=1e-5` | ✅ PASS |
+| 6. `LSMR` | LSMR iterative solver (1 iter) | Exact match (sum, norm, min, max, samples) | `atol=1e-5`, `rtol=1e-5` | ✅ PASS |
+| 7. `Hybrid FLSQR TV` | Hybrid FLSQR + TV | Exact match (sum, norm, min, max, samples) | `atol=1e-5`, `rtol=1e-5` | ✅ PASS |
+| 8. `PICCS` | Prior image constrained compressed sensing | Exact match (sum, norm, min, max, samples) | `atol=1e-5`, `rtol=1e-5` | ✅ PASS |
+| 9. `Parallel FBP` | Parallel-beam FBP (Hann filter) | Exact match (sum, norm, min, max, samples) | `atol=1e-5`, `rtol=1e-5` | ✅ PASS |
+| 10. `MLEM` | Statistical MLEM reconstruction | Exact match (sum, norm, min, max, samples) | `atol=1e-5`, `rtol=1e-5` | ✅ PASS |
+| 11. `PCSD` | POCS TV reconstruction | Exact match (sum, norm, min, max, samples) | `atol=2e-4`, `rtol=1e-5` | ✅ PASS |
+| 12. `AwPCSD` | Adaptive-weighted POCS TV | Exact match (sum, norm, min, max, samples) | `atol=2e-4`, `rtol=1e-5` | ✅ PASS |
 
-**合計: 120 / 120 テスト全項目合格 (12.4s)**
+**Total: 120 / 120 test checks PASSED (12.4s execution time)**
 
 ---
 
-## 3. パッチの適用手順 (`Tigre.jl` 側)
+## 3. Patch Application Guide (`Tigre.jl`)
 
-`patches/tigre_jl_jll_integration.patch` を `Tigre.jl` のブランチに適用する手順:
+To apply `patches/tigre_jl_jll_integration.patch` to a branch of `Tigre.jl`:
 
 ```bash
 cd /path/to/Tigre.jl

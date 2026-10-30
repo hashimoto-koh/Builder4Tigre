@@ -1,62 +1,62 @@
-# CUDA サポート仕様とアーキテクチャ方針 (docs/cuda-support.md)
+# CUDA Support Specification and Architecture Strategy (`docs/cuda-support.md`)
 
-本ドキュメントでは、`libtigre_julia` のビルドにおいて対象とする CUDA Toolkit バージョン、GPU アーキテクチャ (Compute Capability / SASS)、PTX フォールバック、およびドライバ互換性方針を定義する。
-
----
-
-## 1. サポート方針の基本原則
-
-1. **ホスト NVIDIA Driver と CUDA Runtime の分離**:
-   - `libtigre_julia` は `libcudart`（CUDA Runtime API）のみを動的リンクする。
-   - `libcuda.so`（CUDA Driver API）へのリンクは行わず、実行時のホストシステム（NVIDIA Driver）から供給されるものを使用する。
-   - 実行環境には、ビルド時の CUDA Toolkit バージョンを満たす NVIDIA Display / Compute Driver が導入されている必要がある。
-
-2. **初期ターゲットと実機検証環境**:
-   - **開発・実機検証対象**: NVIDIA GeForce RTX 3090 (`sm_86`)
-   - **ホスト Driver**: 570.211.01 (CUDA 12.8 対応)
-   - **初期ビルドターゲット**: CUDA 12.x 系列（Yggdrasil の `CUDA_SDK_jll` および `CUDA_Runtime_jll`）
+This document defines the supported CUDA Toolkit versions, GPU architectures (Compute Capability / SASS), PTX fallback strategy, and driver compatibility policies for building `libtigre_julia`.
 
 ---
 
-## 2. 対象 GPU アーキテクチャとコード生成方針
+## 1. Core Principles of Support Policy
 
-`nvcc` で全てのアーキテクチャ向けにバイナリ（SASS）を生成すると、ライブラリファイルサイズが数ギガバイト規模に肥大化するリスクがある。
-そのため、利用実績の多い主要アーキテクチャの SASS を含め、将来世代向けには最新の PTX を 1 つ含めて実行時 JIT コンパイルを可能とする構成をとる。
+1. **Separation of Host NVIDIA Driver and CUDA Runtime**:
+   - `libtigre_julia` dynamically links only against `libcudart` (CUDA Runtime API).
+   - It does not link against `libcuda.so` (CUDA Driver API); driver calls are resolved at runtime from the host system's NVIDIA Driver.
+   - The execution host requires an NVIDIA Display / Compute Driver meeting the requirements of the targeted CUDA version.
 
-### 2.1 採用する Compute Capability (SASS)
+2. **Initial Target and Hardware Validation Environment**:
+   - **Development & Hardware Verification Target**: NVIDIA GeForce RTX 3090 (`sm_86`)
+   - **Host Driver**: 570.211.01 (CUDA 12.8 compatible)
+   - **Initial Build Target**: CUDA 12.x family (via Yggdrasil's `CUDA_SDK_jll` and `CUDA_Runtime_jll`)
 
-| アーキテクチャ | Compute Capability | 代表 GPU 例 | ビルド方針 |
+---
+
+## 2. Target GPU Architectures and Code Generation Strategy
+
+Generating machine binary code (SASS) for every GPU architecture simultaneously risks bloating the shared library size to multiple gigabytes.
+Therefore, SASS is compiled for major active architectures, supplemented with a PTX virtual assembly target for JIT compilation on future GPU generations.
+
+### 2.1 Targeted Compute Capabilities (SASS)
+
+| Architecture | Compute Capability | Representative GPUs | Build Flag |
 |---|---|---|---|
-| Volta | `sm_70` | Titan V, V100 | SASS 生成 (`-gencode=arch=compute_70,code=sm_70`) |
-| Turing | `sm_75` | RTX 2080, T4 | SASS 生成 (`-gencode=arch=compute_75,code=sm_75`) |
-| Ampere | `sm_80` | A100 | SASS 生成 (`-gencode=arch=compute_80,code=sm_80`) |
-| Ampere | `sm_86` | RTX 3090 (実機基準), RTX 3080 | SASS 生成 (`-gencode=arch=compute_86,code=sm_86`) |
-| Ada Lovelace | `sm_89` | RTX 4090, RTX 4080, L40 | SASS 生成 (`-gencode=arch=compute_89,code=sm_89`) |
-| Hopper | `sm_90` | H100 | SASS 生成 (`-gencode=arch=compute_90,code=sm_90`) |
+| Volta | `sm_70` | Titan V, V100 | SASS generation (`-gencode=arch=compute_70,code=sm_70`) |
+| Turing | `sm_75` | RTX 2080, T4 | SASS generation (`-gencode=arch=compute_75,code=sm_75`) |
+| Ampere | `sm_80` | A100 | SASS generation (`-gencode=arch=compute_80,code=sm_80`) |
+| Ampere | `sm_86` | RTX 3090 (Primary test hardware), RTX 3080 | SASS generation (`-gencode=arch=compute_86,code=sm_86`) |
+| Ada Lovelace | `sm_89` | RTX 4090, RTX 4080, L40 | SASS generation (`-gencode=arch=compute_89,code=sm_89`) |
+| Hopper | `sm_90` | H100 | SASS generation (`-gencode=arch=compute_90,code=sm_90`) |
 
-### 2.2 PTX フォールバック
-- 今後の新しい GPU アーキテクチャ（Blackwell 等）でもドライバが JIT コンパイルして動作できるよう、PTX 仮想アーキテクチャコードを 1 つ含める:
-  `-gencode=arch=compute_86,code=compute_86` (またはビルド対象 CUDA バージョンに応じた最新の compute capability)
+### 2.2 PTX Fallback
+- To ensure forward compatibility on future GPU architectures (e.g. Blackwell) via runtime driver JIT compilation, a PTX virtual architecture code is included:
+  `-gencode=arch=compute_86,code=compute_86` (or the highest compute capability supported by the target CUDA Toolkit version).
 
 ---
 
-## 3. Yggdrasil `platforms/cuda.jl` との統合
+## 3. Integration with Yggdrasil `platforms/cuda.jl`
 
-Yggdrasil の CUDA プラットフォーム拡張機構に従い、以下のプラットフォームタグを付与してビルドする:
+In accordance with Yggdrasil's CUDA platform augmentation mechanism, artifacts are built with CUDA platform tags:
 
 ```julia
-# 例: Linux x86_64 で CUDA 12 系列をターゲットとする場合
+# Example: targeting Linux x86_64 with CUDA 12 series
 Platform("x86_64", "linux"; cuda="12.4")
 ```
 
-- **Build 依存**: `CUDA_SDK_jll`（コンパイル時にヘッダーと nvcc ツールチェーンを供給）
-- **Runtime 依存**: `CUDA_Runtime_jll`（実行時に `libcudart` を供給）
+- **Build Dependency**: `CUDA_SDK_jll` (supplies headers and nvcc toolchain at compile time)
+- **Runtime Dependency**: `CUDA_Runtime_jll` (supplies `libcudart` at runtime)
 
 ---
 
-## 4. 実行時エラーハンドリング
+## 4. Runtime Error Handling
 
-GPU が利用できない環境、または対応する NVIDIA ドライバが存在しない環境で `libtigre_julia` がロードされた場合:
-- `Libdl.dlopen` 自体は成功し、ライブラリの診断・エクスポートシンボルの参照が可能であること。
-- `tigre_julia_get_gpu_count()` は `0` を安全に返すこと。
-- 実際のカーネル呼び出し（`tigre_julia_ax` 等）が行われた場合は、CUDA runtime error を捕捉して `TIGRE_JULIA_STATUS_RUNTIME_ERROR` を返し、詳細メッセージ（例: `cudaErrorNoDevice` や `cudaErrorInsufficientDriver`）を `tigre_julia_last_error_message()` に設定すること（異常終了やクラッシュを防ぐ）。
+When `libtigre_julia` is loaded in an environment without a GPU or without an appropriate NVIDIA driver:
+- `Libdl.dlopen` succeeds, allowing library diagnostics and export symbol inspection.
+- `tigre_julia_get_gpu_count()` safely returns `0`.
+- If an actual kernel call (such as `tigre_julia_ax`) is invoked, CUDA runtime errors are caught safely, returning `TIGRE_JULIA_STATUS_RUNTIME_ERROR` with a descriptive message (e.g., `cudaErrorNoDevice` or `cudaErrorInsufficientDriver`) available via `tigre_julia_last_error_message()` without crashing or aborting the process.

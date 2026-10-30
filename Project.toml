@@ -1,0 +1,11 @@
+name = "Builder4Tigre"
+uuid = "e87f8b22-8b8a-4db3-96b4-f3a77ca70c1e"
+authors = ["Koh Hashimoto and Tigre.jl contributors"]
+version = "0.1.0"
+
+[deps]
+Downloads = "f43a241f-c20a-4ad4-852c-f6b1247861c6"
+Libdl = "8f399da3-3557-5675-b5ff-fb832c97cbdb"
+SHA = "ea8e919c-243c-51af-8825-aaa63cd721ce"
+TOML = "fa267f1f-6049-4f14-aa54-33bafae1ed76"
+Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"

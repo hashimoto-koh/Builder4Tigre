@@ -1,0 +1,41 @@
+# Source Manifest for Builder4Tigre / Tigre_jll
+
+[upstream]
+name = "TIGRE"
+repository = "https://github.com/CERN/TIGRE.git"
+ref = "81b6be2cc12ee630d36cba941e111ba14ba34c7c"
+archive_url = "https://github.com/CERN/TIGRE/archive/81b6be2cc12ee630d36cba941e111ba14ba34c7c.tar.gz"
+archive_sha256 = "8e757c629982285a77d01e136f688ec3f659adb54bbfce91f48dc39f633fdc4a"
+
+upstream_common_cuda_sources = [
+    "projection.cpp",
+    "TIGRE_common.cpp",
+    "GpuIds.cpp",
+    "gpuUtils.cu",
+    "Siddon_projection.cu",
+    "Siddon_projection_parallel.cu",
+    "ray_interpolated_projection.cu",
+    "ray_interpolated_projection_parallel.cu",
+    "voxel_backprojection.cu",
+    "voxel_backprojection2.cu",
+    "voxel_backprojection_parallel.cu",
+    "GD_TV.cu",
+    "GD_AwTV.cu",
+    "tv_proximal.cu",
+    "PICCS.cu",
+]
+
+[bundled.wrapper_source]
+origin_repository = "https://github.com/hashimoto-koh/Tigre.jl"
+origin_commit = "da939625f5934c181c1b68f8f03c9922b64f7f71"
+
+[bundled.files]
+"bundled/wrapper/src/tigre_julia_runtime.cpp" = "d3f10a42746333a7bf81cd8161d21274f1b80ad66d5d2032aecd4fb5e0e5a15b"
+"bundled/wrapper/src/tigre_julia_shim.cpp" = "b662c927affce84b276f73f858ccbdc9f26ae583997a8463c0dd12dfd05d5068"
+"bundled/wrapper/include/tigre_julia_runtime.hpp" = "4509e84eb595e2aad3d8af96a809571b679b4ec7f4d8068fd20863dc59d85d58"
+"bundled/wrapper/include/tigre_julia_shim.h" = "85c79eebd88675bf98fdb0d18b0de6573205ec6cfb7d7839b6188eb68f733e89"
+"bundled/overlay/TIGRE_common.cpp" = "7cd1ff4217f8999c381acbf487508ff2ccb5884f79d66e9f1063cfb36ebbe546"
+"bundled/overlay/TIGRE_common.hpp" = "9db1ef477613ff86b42036f03b2a88ca2992c1976ac1157152f8c16a04df8fb2"
+
+[patches]
+files = []

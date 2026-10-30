@@ -18,8 +18,6 @@ __pycache__/
 *.log
 
 # Local development files
-/AGENTS.md
-/PROMPT.md
 /private/
 /.codex/
 /.vscode/

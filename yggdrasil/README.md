@@ -12,6 +12,7 @@ yggdrasil/
     └── Tigre/
         ├── build_tarballs.jl
         └── bundled/
+            ├── LICENSE
             ├── overlay/
             │   ├── TIGRE_common.cpp
             │   └── TIGRE_common.hpp

@@ -30,6 +30,7 @@ origin_repository = "https://github.com/hashimoto-koh/Tigre.jl"
 origin_commit = "da939625f5934c181c1b68f8f03c9922b64f7f71"
 
 [bundled.files]
+"bundled/LICENSE" = "d23e192286d3840a67ff37277753fe3b235f19d9f0d5c770745bdd28c8912675"
 "bundled/wrapper/src/tigre_julia_runtime.cpp" = "d3f10a42746333a7bf81cd8161d21274f1b80ad66d5d2032aecd4fb5e0e5a15b"
 "bundled/wrapper/src/tigre_julia_shim.cpp" = "b662c927affce84b276f73f858ccbdc9f26ae583997a8463c0dd12dfd05d5068"
 "bundled/wrapper/include/tigre_julia_runtime.hpp" = "4509e84eb595e2aad3d8af96a809571b679b4ec7f4d8068fd20863dc59d85d58"

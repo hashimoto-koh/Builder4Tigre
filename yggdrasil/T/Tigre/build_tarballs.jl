@@ -139,6 +139,9 @@ ${NVCC} --shared -O3 --std=c++14 \
 
 # 6. Install license files
 install_license "${TIGRE_DIR}/LICENSE.txt"
+if [ -f "LICENSE" ]; then
+    install_license "LICENSE"
+fi
 """
 
 # Products: exported shared library

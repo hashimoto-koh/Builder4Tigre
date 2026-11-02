@@ -38,7 +38,7 @@ origin_commit = "da939625f5934c181c1b68f8f03c9922b64f7f71"
 "bundled/wrapper/include/tigre_julia_shim.h" = "85c79eebd88675bf98fdb0d18b0de6573205ec6cfb7d7839b6188eb68f733e89"
 "bundled/overlay/TIGRE_common.cpp" = "7cd1ff4217f8999c381acbf487508ff2ccb5884f79d66e9f1063cfb36ebbe546"
 "bundled/overlay/TIGRE_common.hpp" = "9db1ef477613ff86b42036f03b2a88ca2992c1976ac1157152f8c16a04df8fb2"
-"bundled/patches/0001-fix-piccs-leak-and-device-reset.patch" = "aa65699a68de409f2b49f1c6ad948a04e2866306f4f57be191eebe2e753334c1"
+"bundled/patches/0001-fix-piccs-leak-and-device-reset.patch" = "6f99b936c78808dbfd509a35fa54054e76ca56632ab147150cb933f89472fe91"
 
 [patches]
 files = [

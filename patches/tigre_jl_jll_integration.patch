@@ -10,7 +10,7 @@ index 1234567..89abcde 100644
  
  [compat]
  julia = "1.10"
-+Tigre_jll = "2.7"
++Tigre_jll = "3.1"
 diff --git a/src/bindings.jl b/src/bindings.jl
 index 2345678..9abcdef 100644
 --- a/src/bindings.jl
@@ -21,24 +21,28 @@ index 2345678..9abcdef 100644
  
  const ROOT_DIR = normpath(joinpath(@__DIR__, ".."))
  const DEPS_DIR = joinpath(ROOT_DIR, "deps")
-@@ -73,6 +74,17 @@ const _NATIVE_HANDLE = Ref{Ptr{Cvoid}}(C_NULL)
- Return the expected filesystem path to the compiled native shared library (`libtigre_julia`).
+@@ -73,6 +74,22 @@ const _NATIVE_HANDLE = Ref{Ptr{Cvoid}}(C_NULL)
+ Return the expected filesystem path to the compiled native shared library (`libtigre`).
  """
 -native_library_path() = joinpath(ROOT_DIR, "deps", "usr", "lib", "libtigre_julia.$(Libdl.dlext)")
 +function native_library_path()
 +    override = _env_string(["TIGRE_NATIVE_PATH", "LIBTIGRE_PATH"], "")
 +    !isempty(override) && return normpath(override)
 +    if isdefined(@__MODULE__, :Tigre_jll) && isdefined(Tigre_jll, :is_available) && Tigre_jll.is_available()
-+        return Tigre_jll.libtigre_julia_path
++        return isdefined(Tigre_jll, :libtigre_path) ? Tigre_jll.libtigre_path : Tigre_jll.libtigre_julia_path
 +    end
-+    return joinpath(ROOT_DIR, "deps", "usr", "lib", "libtigre_julia.$(Libdl.dlext)")
++    for name in ("libtigre", "libtigre_julia")
++        candidate = joinpath(ROOT_DIR, "deps", "usr", "lib", "$(name).$(Libdl.dlext)")
++        isfile(candidate) && return candidate
++    end
++    return joinpath(ROOT_DIR, "deps", "usr", "lib", "libtigre.$(Libdl.dlext)")
 +end
 +
 +native_library_backend() = (isdefined(@__MODULE__, :Tigre_jll) && isdefined(Tigre_jll, :is_available) && Tigre_jll.is_available()) ? :jll : :source
  
  """
      native_library_available() -> Bool
-@@ -204,6 +216,7 @@ Return a summary NamedTuple reporting current status of the native library:
+@@ -204,6 +221,7 @@ Return a summary NamedTuple reporting current status of the native library:
  library_status() = (;
 +    backend = native_library_backend(),
      path = native_library_path(),

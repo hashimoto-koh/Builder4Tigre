@@ -42,8 +42,12 @@ end
 function verify_upstream_archive(manifest::Dict{String, Any}; download_if_missing::Bool = false)
     println("--- Verifying upstream archive ---")
     upstream = get(manifest, "upstream", Dict{String, Any}())
-    archive_url = upstream["archive_url"]
-    expected_hash = upstream["archive_sha256"]
+    archive_url = get(upstream, "archive_url", "")
+    expected_hash = get(upstream, "archive_sha256", "")
+    if isempty(archive_url) || isempty(expected_hash)
+        println("⚠️ Upstream archive URL or SHA256 not specified. Skipping archive check.")
+        return true
+    end
     
     target_cache = joinpath(@__DIR__, basename(archive_url))
     if !isfile(target_cache)

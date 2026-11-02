@@ -8,17 +8,15 @@ function find_test_library()
     if haskey(ENV, "LIBTIGRE_PATH") && isfile(ENV["LIBTIGRE_PATH"])
         return ENV["LIBTIGRE_PATH"]
     end
-    extracted = normpath(joinpath(@__DIR__, "..", "products", "extracted", "lib", "libtigre_julia.$(Libdl.dlext)"))
-    if isfile(extracted)
-        return extracted
+    for libname in ("libtigre", "libtigre_julia")
+        extracted = normpath(joinpath(@__DIR__, "..", "products", "extracted", "lib", "$(libname).$(Libdl.dlext)"))
+        isfile(extracted) && return extracted
+        local_prod = normpath(joinpath(@__DIR__, "..", "products", "$(libname).$(Libdl.dlext)"))
+        isfile(local_prod) && return local_prod
     end
-    local_prod = normpath(joinpath(@__DIR__, "..", "products", "libtigre_julia.$(Libdl.dlext)"))
-    if isfile(local_prod)
-        return local_prod
-    end
-    candidate = "/home/jov/git/prj/Tigre.jl/deps/usr/lib/libtigre_julia.$(Libdl.dlext)"
-    if isfile(candidate)
-        return candidate
+    for libname in ("libtigre", "libtigre_julia")
+        candidate = "/home/jov/git/prj/Tigre.jl/deps/usr/lib/$(libname).$(Libdl.dlext)"
+        isfile(candidate) && return candidate
     end
     return nothing
 end

@@ -17,7 +17,7 @@ println("=======================================================\n")
 
 # Verify Tigre_jll is available
 @test Tigre_jll.is_available() == true
-artifact_lib = Tigre_jll.libtigre_julia_path
+artifact_lib = isdefined(Tigre_jll, :libtigre_path) ? Tigre_jll.libtigre_path : Tigre_jll.libtigre_julia_path
 println("Artifact library: $artifact_lib")
 @test isfile(artifact_lib)
 

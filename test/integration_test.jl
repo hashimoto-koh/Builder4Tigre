@@ -4,10 +4,6 @@
 using Test
 using Libdl
 
-# Push Tigre.jl and Tigre_jll to LOAD_PATH without modifying Tigre.jl
-pushfirst!(LOAD_PATH, "/home/jov/git/prj/Tigre.jl")
-pushfirst!(LOAD_PATH, "/home/jov/.julia/dev/Tigre_jll")
-
 using Tigre
 import Tigre_jll
 
@@ -17,7 +13,7 @@ println("=======================================================\n")
 
 # Verify Tigre_jll is available
 @test Tigre_jll.is_available() == true
-artifact_lib = isdefined(Tigre_jll, :libtigre_path) ? Tigre_jll.libtigre_path : Tigre_jll.libtigre_julia_path
+artifact_lib = Tigre_jll.libtigre_path
 println("Artifact library: $artifact_lib")
 @test isfile(artifact_lib)
 
@@ -27,7 +23,7 @@ Tigre._NATIVE_HANDLE[] = Libdl.dlopen(artifact_lib)
 println("Configured Tigre._NATIVE_HANDLE to use Tigre_jll artifact.\n")
 
 # Include regression reference fixtures from Tigre.jl
-include("/home/jov/git/prj/Tigre.jl/test/regression_fixtures.jl")
+include(joinpath(pkgdir(Tigre), "test", "regression_fixtures.jl"))
 
 # Helper functions identical to Tigre.jl/test/runtests.jl
 import LinearAlgebra: norm

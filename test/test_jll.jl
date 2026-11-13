@@ -11,8 +11,8 @@ import Tigre_jll
     println("✅ Tigre_jll.is_available() == true")
 
     # 2. Library path
-    libpath = Tigre_jll.libtigre_julia_path
-    println("✅ Tigre_jll.libtigre_julia_path: $libpath")
+    libpath = Tigre_jll.libtigre_path
+    println("✅ Tigre_jll.libtigre_path: $libpath")
     @test isfile(libpath)
 
     # 3. dlopen
